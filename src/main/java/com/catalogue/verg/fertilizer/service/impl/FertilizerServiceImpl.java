@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
@@ -100,7 +101,7 @@ public class FertilizerServiceImpl implements FertilizerService {
 
             log.info("FertilizerServiceImpl::createFertilizer::persisted fertilizer in postgres");
             ObjectNode jsonNode = objectMapper.createObjectNode();
-            //            jsonNode.put("status", Constants.ACTIVE);
+//            jsonNode.put("status", Constants.ACTIVE);
             jsonNode.setAll((ObjectNode) fertilizerEntity);
             Map<String, Object> map = objectMapper.convertValue(jsonNode, Map.class);
             esUtilService.addDocument(Constants.FERTILIZER_INDEX_NAME, Constants.INDEX_TYPE,
@@ -110,7 +111,7 @@ public class FertilizerServiceImpl implements FertilizerService {
             map.put(Constants.FERTILIZER_ID_RQST, primaryID);
             response.setResult(map);
             response.setResponseCode(HttpStatus.OK);
-            log.info("FertilizerServiceImpl::createFertilizer::persisted fertilizer in Verg");
+            log.info("FertilizerServiceImpl::createFertilizer::persisted fertilizer in OAS");
             return response;
 
         } catch (Exception e) {
@@ -204,13 +205,60 @@ public class FertilizerServiceImpl implements FertilizerService {
 
     @Override
     public CustomResponse delete(String id) {
-        return null;
-    }
+        log.info("FertilizerServiceImpl::delete:inside the method with id: {}", id);
+        CustomResponse response = new CustomResponse();
 
-    public void createSuccessResponse(CustomResponse response) {
-        response.setParams(new RespParam());
-        response.getParams().setStatus(Constants.SUCCESS);
-        response.setResponseCode(HttpStatus.OK);
+        // Validate that the ID is not null or empty
+        if (StringUtils.isEmpty(id)) {
+            log.warn("FertilizerServiceImpl::delete:id is null or empty");
+            response.setResponseCode(HttpStatus.BAD_REQUEST);
+            response.setMessage(Constants.ID_NOT_FOUND);
+            return response;
+        }
+
+        try {
+            // Check if the entity exists in the database
+            Optional<FertilizerEntity> entityOptional = fertilizerRepository.findById(id);
+            if (entityOptional.isEmpty()) {
+                log.warn("FertilizerServiceImpl::delete:no record found for id: {}", id);
+                response.setResponseCode(HttpStatus.NOT_FOUND);
+                response.setMessage(Constants.INVALID_ID);
+                return response;
+            }
+
+            FertilizerEntity fertilizerEntity = entityOptional.get();
+
+            // Check if the entity is already deleted (soft-deleted)
+            if (Constants.IN_ACTIVE.equals(fertilizerEntity.getStatus())) {
+                log.warn("FertilizerServiceImpl::delete:record already deleted for id: {}", id);
+                response.setResponseCode(HttpStatus.BAD_REQUEST);
+                response.setMessage("Record is already deleted");
+                return response;
+            }
+
+            // Soft delete: update the status to INACTIVE and set updatedOn timestamp
+            fertilizerEntity.setStatus(Constants.IN_ACTIVE);
+            fertilizerEntity.setUpdatedOn(new Timestamp(System.currentTimeMillis()));
+            fertilizerRepository.save(fertilizerEntity);
+            log.info("FertilizerServiceImpl::delete:soft deleted record in postgres for id: {}", id);
+
+            // Remove document from Elasticsearch
+            esUtilService.deleteDocument(id, Constants.FERTILIZER_INDEX_NAME);
+            log.info("FertilizerServiceImpl::delete:deleted document from elasticsearch for id: {}", id);
+
+            // Remove from Redis cache
+            cacheService.deleteCache(id);
+            log.info("FertilizerServiceImpl::delete:evicted cache for id: {}", id);
+
+            response.setMessage(Constants.SUCCESSFULLY_DELETED);
+            response.setResponseCode(HttpStatus.OK);
+            return response;
+
+        } catch (Exception e) {
+            log.error("FertilizerServiceImpl::delete:error while deleting record for id: {}", id, e);
+            throw new CustomException(Constants.ERROR, "error while deleting record",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -221,6 +269,12 @@ public class FertilizerServiceImpl implements FertilizerService {
                 Constants.FERTILIZER_VALIDATION_FILE_JSON,
                 this::createFertilizer
         );
+    }
+
+    public void createSuccessResponse(CustomResponse response) {
+        response.setParams(new RespParam());
+        response.getParams().setStatus(Constants.SUCCESS);
+        response.setResponseCode(HttpStatus.OK);
     }
 
     public String generateRedisJwtTokenKey(Object requestPayload) {

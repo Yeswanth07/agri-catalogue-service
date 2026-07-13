@@ -34,6 +34,12 @@ public class PesticideController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @DeleteMapping("/v1/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable String id) {
+        CustomResponse response = pesticideService.delete(id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping("/v1/import")
     public ResponseEntity<CustomResponse> importData(@RequestParam("file") MultipartFile file) {
         CustomResponse response = pesticideService.importData(file);

@@ -23,7 +23,6 @@
         }
     },
     "required": [
-        "Farmer ID",
         "Farmer",
         "Livestock Type",
         "Number"

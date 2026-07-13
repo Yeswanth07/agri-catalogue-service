@@ -2,12 +2,14 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
-        "seedId": {
+        "Seed Id": {
             "type": "string",
+            "prefix": "seed-",
+            "key": "Primary",
             "description": "description about seedId"
         }
     },
     "required": [
-        "seedId"
+        "Seed Id"
     ]
 }

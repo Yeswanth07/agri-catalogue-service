@@ -34,6 +34,12 @@ public class LivestockController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @DeleteMapping("/v1/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable String id) {
+        CustomResponse response = livestockService.delete(id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping("/v1/import")
     public ResponseEntity<CustomResponse> importData(@RequestParam("file") MultipartFile file) {
         CustomResponse response = livestockService.importData(file);

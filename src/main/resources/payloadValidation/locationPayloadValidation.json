@@ -36,7 +36,6 @@
         }
     },
     "required": [
-        "Farmer ID",
         "Farmer",
         "Land ID",
         "Area In Hectare",

@@ -20,29 +20,6 @@ public class VergProperties {
 
         @Value("${elastic.required.field.sample.json.path}")
         private String elasticSampleJsonPath;
-
-    
-        @Value("${elastic.required.field.oascroptype.json.path}")
-        private String elasticOascroptypeJsonPath;
-    
-        @Value("${elastic.required.field.oascropcategory.json.path}")
-        private String elasticOascropcategoryJsonPath;
-        @Value("${elastic.required.field.oasseason.json.path}")
-        private String elasticOasseasonJsonPath;
-    
-        @Value("${elastic.required.field.oascropvariety.json.path}")
-        private String elasticOascropvarietyJsonPath;
-    
-        @Value("${elastic.required.field.oaspesticide.json.path}")
-        private String elasticOaspesticideJsonPath;
-    
-        @Value("${elastic.required.field.oasinsectiside.json.path}")
-        private String elasticOasinsectisideJsonPath;
-    
-        @Value("${elastic.required.field.oasfertilizer.json.path}")
-        private String elasticOasfertilizerJsonPath;
-        @Value("${elastic.required.field.oassoil.json.path}")
-        private String elasticOassoilJsonPath;
     
         @Value("${elastic.required.field.seed.json.path}")
         private String elasticSeedJsonPath;

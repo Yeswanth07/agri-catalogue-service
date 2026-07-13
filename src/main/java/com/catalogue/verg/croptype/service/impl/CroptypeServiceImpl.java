@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
@@ -100,7 +101,7 @@ public class CroptypeServiceImpl implements CroptypeService {
 
             log.info("CroptypeServiceImpl::createCroptype::persisted croptype in postgres");
             ObjectNode jsonNode = objectMapper.createObjectNode();
-            //            jsonNode.put("status", Constants.ACTIVE);
+//            jsonNode.put("status", Constants.ACTIVE);
             jsonNode.setAll((ObjectNode) croptypeEntity);
             Map<String, Object> map = objectMapper.convertValue(jsonNode, Map.class);
             esUtilService.addDocument(Constants.CROPTYPE_INDEX_NAME, Constants.INDEX_TYPE,
@@ -110,7 +111,7 @@ public class CroptypeServiceImpl implements CroptypeService {
             map.put(Constants.CROPTYPE_ID_RQST, primaryID);
             response.setResult(map);
             response.setResponseCode(HttpStatus.OK);
-            log.info("CroptypeServiceImpl::createCroptype::persisted croptype in Verg");
+            log.info("CroptypeServiceImpl::createCroptype::persisted croptype in OAS");
             return response;
 
         } catch (Exception e) {
@@ -204,13 +205,60 @@ public class CroptypeServiceImpl implements CroptypeService {
 
     @Override
     public CustomResponse delete(String id) {
-        return null;
-    }
+        log.info("CroptypeServiceImpl::delete:inside the method with id: {}", id);
+        CustomResponse response = new CustomResponse();
 
-    public void createSuccessResponse(CustomResponse response) {
-        response.setParams(new RespParam());
-        response.getParams().setStatus(Constants.SUCCESS);
-        response.setResponseCode(HttpStatus.OK);
+        // Validate that the ID is not null or empty
+        if (StringUtils.isEmpty(id)) {
+            log.warn("CroptypeServiceImpl::delete:id is null or empty");
+            response.setResponseCode(HttpStatus.BAD_REQUEST);
+            response.setMessage(Constants.ID_NOT_FOUND);
+            return response;
+        }
+
+        try {
+            // Check if the entity exists in the database
+            Optional<CroptypeEntity> entityOptional = croptypeRepository.findById(id);
+            if (entityOptional.isEmpty()) {
+                log.warn("CroptypeServiceImpl::delete:no record found for id: {}", id);
+                response.setResponseCode(HttpStatus.NOT_FOUND);
+                response.setMessage(Constants.INVALID_ID);
+                return response;
+            }
+
+            CroptypeEntity croptypeEntity = entityOptional.get();
+
+            // Check if the entity is already deleted (soft-deleted)
+            if (Constants.IN_ACTIVE.equals(croptypeEntity.getStatus())) {
+                log.warn("CroptypeServiceImpl::delete:record already deleted for id: {}", id);
+                response.setResponseCode(HttpStatus.BAD_REQUEST);
+                response.setMessage("Record is already deleted");
+                return response;
+            }
+
+            // Soft delete: update the status to INACTIVE and set updatedOn timestamp
+            croptypeEntity.setStatus(Constants.IN_ACTIVE);
+            croptypeEntity.setUpdatedOn(new Timestamp(System.currentTimeMillis()));
+            croptypeRepository.save(croptypeEntity);
+            log.info("CroptypeServiceImpl::delete:soft deleted record in postgres for id: {}", id);
+
+            // Remove document from Elasticsearch
+            esUtilService.deleteDocument(id, Constants.CROPTYPE_INDEX_NAME);
+            log.info("CroptypeServiceImpl::delete:deleted document from elasticsearch for id: {}", id);
+
+            // Remove from Redis cache
+            cacheService.deleteCache(id);
+            log.info("CroptypeServiceImpl::delete:evicted cache for id: {}", id);
+
+            response.setMessage(Constants.SUCCESSFULLY_DELETED);
+            response.setResponseCode(HttpStatus.OK);
+            return response;
+
+        } catch (Exception e) {
+            log.error("CroptypeServiceImpl::delete:error while deleting record for id: {}", id, e);
+            throw new CustomException(Constants.ERROR, "error while deleting record",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -221,6 +269,12 @@ public class CroptypeServiceImpl implements CroptypeService {
                 Constants.CROPTYPE_VALIDATION_FILE_JSON,
                 this::createCroptype
         );
+    }
+
+    public void createSuccessResponse(CustomResponse response) {
+        response.setParams(new RespParam());
+        response.getParams().setStatus(Constants.SUCCESS);
+        response.setResponseCode(HttpStatus.OK);
     }
 
     public String generateRedisJwtTokenKey(Object requestPayload) {

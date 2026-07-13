@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import java.sql.Timestamp;
@@ -100,7 +101,7 @@ public class CropvarietyServiceImpl implements CropvarietyService {
 
             log.info("CropvarietyServiceImpl::createCropvariety::persisted cropvariety in postgres");
             ObjectNode jsonNode = objectMapper.createObjectNode();
-            //            jsonNode.put("status", Constants.ACTIVE);
+//            jsonNode.put("status", Constants.ACTIVE);
             jsonNode.setAll((ObjectNode) cropvarietyEntity);
             Map<String, Object> map = objectMapper.convertValue(jsonNode, Map.class);
             esUtilService.addDocument(Constants.CROPVARIETY_INDEX_NAME, Constants.INDEX_TYPE,
@@ -110,7 +111,7 @@ public class CropvarietyServiceImpl implements CropvarietyService {
             map.put(Constants.CROPVARIETY_ID_RQST, primaryID);
             response.setResult(map);
             response.setResponseCode(HttpStatus.OK);
-            log.info("CropvarietyServiceImpl::createCropvariety::persisted cropvariety in Verg");
+            log.info("CropvarietyServiceImpl::createCropvariety::persisted cropvariety in OAS");
             return response;
 
         } catch (Exception e) {
@@ -204,13 +205,60 @@ public class CropvarietyServiceImpl implements CropvarietyService {
 
     @Override
     public CustomResponse delete(String id) {
-        return null;
-    }
+        log.info("CropvarietyServiceImpl::delete:inside the method with id: {}", id);
+        CustomResponse response = new CustomResponse();
 
-    public void createSuccessResponse(CustomResponse response) {
-        response.setParams(new RespParam());
-        response.getParams().setStatus(Constants.SUCCESS);
-        response.setResponseCode(HttpStatus.OK);
+        // Validate that the ID is not null or empty
+        if (StringUtils.isEmpty(id)) {
+            log.warn("CropvarietyServiceImpl::delete:id is null or empty");
+            response.setResponseCode(HttpStatus.BAD_REQUEST);
+            response.setMessage(Constants.ID_NOT_FOUND);
+            return response;
+        }
+
+        try {
+            // Check if the entity exists in the database
+            Optional<CropvarietyEntity> entityOptional = cropvarietyRepository.findById(id);
+            if (entityOptional.isEmpty()) {
+                log.warn("CropvarietyServiceImpl::delete:no record found for id: {}", id);
+                response.setResponseCode(HttpStatus.NOT_FOUND);
+                response.setMessage(Constants.INVALID_ID);
+                return response;
+            }
+
+            CropvarietyEntity cropvarietyEntity = entityOptional.get();
+
+            // Check if the entity is already deleted (soft-deleted)
+            if (Constants.IN_ACTIVE.equals(cropvarietyEntity.getStatus())) {
+                log.warn("CropvarietyServiceImpl::delete:record already deleted for id: {}", id);
+                response.setResponseCode(HttpStatus.BAD_REQUEST);
+                response.setMessage("Record is already deleted");
+                return response;
+            }
+
+            // Soft delete: update the status to INACTIVE and set updatedOn timestamp
+            cropvarietyEntity.setStatus(Constants.IN_ACTIVE);
+            cropvarietyEntity.setUpdatedOn(new Timestamp(System.currentTimeMillis()));
+            cropvarietyRepository.save(cropvarietyEntity);
+            log.info("CropvarietyServiceImpl::delete:soft deleted record in postgres for id: {}", id);
+
+            // Remove document from Elasticsearch
+            esUtilService.deleteDocument(id, Constants.CROPVARIETY_INDEX_NAME);
+            log.info("CropvarietyServiceImpl::delete:deleted document from elasticsearch for id: {}", id);
+
+            // Remove from Redis cache
+            cacheService.deleteCache(id);
+            log.info("CropvarietyServiceImpl::delete:evicted cache for id: {}", id);
+
+            response.setMessage(Constants.SUCCESSFULLY_DELETED);
+            response.setResponseCode(HttpStatus.OK);
+            return response;
+
+        } catch (Exception e) {
+            log.error("CropvarietyServiceImpl::delete:error while deleting record for id: {}", id, e);
+            throw new CustomException(Constants.ERROR, "error while deleting record",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -221,6 +269,12 @@ public class CropvarietyServiceImpl implements CropvarietyService {
                 Constants.CROPVARIETY_VALIDATION_FILE_JSON,
                 this::createCropvariety
         );
+    }
+
+    public void createSuccessResponse(CustomResponse response) {
+        response.setParams(new RespParam());
+        response.getParams().setStatus(Constants.SUCCESS);
+        response.setResponseCode(HttpStatus.OK);
     }
 
     public String generateRedisJwtTokenKey(Object requestPayload) {

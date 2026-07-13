@@ -61,6 +61,12 @@ public class Constants{
     public static final String INTEREST_INDEX_NAME = "sampleIndex";
 
     
+    // Testthree Specific Constants
+    public static final String TESTTHREE_VALIDATION_FILE_JSON = "/payloadValidation/testthreePayloadValidation.json";
+    public static final String TESTTHREE_ID_RQST = "testthreeId";
+    public static final String TESTTHREE_INDEX_NAME = "testthree_index";
+
+    
     // Seed Specific Constants
     public static final String SEED_VALIDATION_FILE_JSON = "/payloadValidation/seedPayloadValidation.json";
     public static final String SEED_ID_RQST = "seedId";

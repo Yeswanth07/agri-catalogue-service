@@ -111,7 +111,7 @@ public class CropcategoryServiceImpl implements CropcategoryService {
             map.put(Constants.CROPCATEGORY_ID_RQST, primaryID);
             response.setResult(map);
             response.setResponseCode(HttpStatus.OK);
-            log.info("CropcategoryServiceImpl::createCropcategory::persisted cropcategory in Verg");
+            log.info("CropcategoryServiceImpl::createCropcategory::persisted cropcategory in OAS");
             return response;
 
         } catch (Exception e) {
