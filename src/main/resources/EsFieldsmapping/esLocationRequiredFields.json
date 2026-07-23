@@ -5,7 +5,13 @@
     "region": {
         "type": "keyword"
     },
-    "marketPlace": {
+    "zone": {
+        "type": "keyword"
+    },
+    "woreda": {
+        "type": "keyword"
+    },
+    "kebele": {
         "type": "keyword"
     }
 }

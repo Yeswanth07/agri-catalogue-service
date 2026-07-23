@@ -138,6 +138,12 @@ public class Constants{
     public static final String CROPVARIETY_ID_RQST = "cropvarietyId";
     public static final String CROPVARIETY_INDEX_NAME = "cropvariety_index";
 
+    
+    // MarketPlace Specific Constants
+    public static final String MARKET_PLACE_VALIDATION_FILE_JSON = "/payloadValidation/marketPlacePayloadValidation.json";
+    public static final String MARKET_PLACE_ID_RQST = "marketPlaceId";
+    public static final String MARKET_PLACE_INDEX_NAME = "marketPlace_index";
+
         private Constants() {
     }
 }

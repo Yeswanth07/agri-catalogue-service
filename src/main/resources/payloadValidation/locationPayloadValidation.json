@@ -11,15 +11,25 @@
         },
         "region": {
             "type": "string",
-            "description": "region the market place belongs to"
+            "description": "region"
         },
-        "marketPlace": {
+        "zone": {
             "type": "string",
-            "description": "name of the market place"
+            "description": "zone"
+        },
+        "woreda": {
+            "type": "string",
+            "description": "woreda"
+        },
+        "kebele": {
+            "type": "string",
+            "description": "kebele"
         }
     },
     "required": [
         "region",
-        "marketPlace"
+        "zone",
+        "woreda",
+        "kebele"
     ]
 }

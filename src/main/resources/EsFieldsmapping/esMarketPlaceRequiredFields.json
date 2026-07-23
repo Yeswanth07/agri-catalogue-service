@@ -1,0 +1,11 @@
+{
+    "marketPlaceId": {
+        "type": "keyword"
+    },
+    "region": {
+        "type": "keyword"
+    },
+    "marketPlace": {
+        "type": "keyword"
+    }
+}

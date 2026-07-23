@@ -55,4 +55,7 @@ public class VergProperties {
     
         @Value("${elastic.required.field.cropvariety.json.path}")
         private String elasticCropvarietyJsonPath;
+    
+        @Value("${elastic.required.field.marketplace.json.path}")
+        private String elasticMarketPlaceJsonPath;
     }
