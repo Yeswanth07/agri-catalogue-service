@@ -76,7 +76,7 @@ public class Constants{
 
     
     // Audit Specific Constants
-    public static final String AUDIT_VALIDATION_FILE_JSON = "/payloadValidation/auditPayloadValidation.json";
+    public static final String AUDIT_VALIDATION_FILE_JSON = "yloadValidation/auditPayloadValidation.json";
     public static final String AUDIT_ID_RQST = "auditId";
     public static final String AUDIT_INDEX_NAME = "audit_index";
 
@@ -85,12 +85,6 @@ public class Constants{
     public static final String AUDIT_DEFAULT_USER_ID = "ANONYMOUS";
     public static final String AUDIT_DEFAULT_USER_NAME = "ANONYMOUS";
     public static final String AUDIT_DEFAULT_USER_ROLE = "SYSTEM";
-
-    
-    // Locationmapper Specific Constants
-    public static final String LOCATIONMAPPER_VALIDATION_FILE_JSON = "/payloadValidation/locationmapperPayloadValidation.json";
-    public static final String LOCATIONMAPPER_ID_RQST = "locationmapperId";
-    public static final String LOCATIONMAPPER_INDEX_NAME = "locationmapper_index";
 
     
     // Seed Specific Constants
@@ -175,6 +169,12 @@ public class Constants{
     public static final String LOCATIONOBJECT_VALIDATION_FILE_JSON = "/payloadValidation/locationobjectPayloadValidation.json";
     public static final String LOCATIONOBJECT_ID_RQST = "locationobjectId";
     public static final String LOCATIONOBJECT_INDEX_NAME = "locationobject_index";
+
+    
+    // Locationmapper Specific Constants
+    public static final String LOCATIONMAPPER_VALIDATION_FILE_JSON = "/payloadValidation/locationmapperPayloadValidation.json";
+    public static final String LOCATIONMAPPER_ID_RQST = "locationmapperId";
+    public static final String LOCATIONMAPPER_INDEX_NAME = "locationmapper_index";
 
     
     // Locationconfig Specific Constants

@@ -200,7 +200,7 @@ public class CropvarietyServiceImpl implements CropvarietyService {
         CustomResponse response = new CustomResponse();
         SearchResult searchResult = redisTemplate.opsForValue()
                 .get(generateRedisJwtTokenKey(searchCriteria));
-        if (searchResult != null) {
+        if (searchResult != null && !Boolean.TRUE.equals(searchCriteria.getOverrideCache())) {
             log.info("CropvarietyServiceImpl::searchCropvariety: cropvariety search result fetched from redis");
             response.getResult().put(Constants.RESULT, searchResult);
             createSuccessResponse(response);
@@ -220,10 +220,15 @@ public class CropvarietyServiceImpl implements CropvarietyService {
             return response;
         }
         try {
+            log.info("CropvarietyServiceImpl::searchCropvariety: cropvariety search result fetched from ES");
             searchResult =
                     esUtilService.searchDocuments(Constants.CROPVARIETY_INDEX_NAME, searchCriteria);
             response.getResult().put(Constants.RESULT, searchResult);
             createSuccessResponse(response);
+            redisTemplate.opsForValue()
+                                .set(generateRedisJwtTokenKey(searchCriteria), searchResult, searchResultRedisTtl,
+                                        TimeUnit.SECONDS);
+
             auditLogService.logAudit(null, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -234,9 +239,9 @@ public class CropvarietyServiceImpl implements CropvarietyService {
         } catch (Exception e) {
             createErrorResponse(response, e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR,
                     Constants.FAILED_CONST);
-            redisTemplate.opsForValue()
-                    .set(generateRedisJwtTokenKey(searchCriteria), searchResult, searchResultRedisTtl,
-                            TimeUnit.SECONDS);
+            //redisTemplate.opsForValue()
+            //        .set(generateRedisJwtTokenKey(searchCriteria), searchResult, searchResultRedisTtl,
+            //                TimeUnit.SECONDS);
             return response;
         }
     }

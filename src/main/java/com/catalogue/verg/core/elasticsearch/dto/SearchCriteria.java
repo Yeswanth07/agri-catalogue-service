@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,4 +37,7 @@ public class SearchCriteria {
     private String startsWith;
 
     private String startsWithField;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private Boolean overrideCache;
 }
