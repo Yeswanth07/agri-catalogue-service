@@ -8,6 +8,8 @@
     "auditStatus":         { "type": "keyword" },
     "entityBeforeChanges": { "type": "text" },
     "entityAfterChanges":  { "type": "text" },
+    "entityCreatedOn":     { "type": "date" },
+    "entityUpdatedOn":     { "type": "date" },
     "createdOn":           { "type": "date" },
     "updatedOn":           { "type": "date" }
 }

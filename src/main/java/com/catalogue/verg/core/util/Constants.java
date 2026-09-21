@@ -76,7 +76,7 @@ public class Constants{
 
     
     // Audit Specific Constants
-    public static final String AUDIT_VALIDATION_FILE_JSON = "yloadValidation/auditPayloadValidation.json";
+    public static final String AUDIT_VALIDATION_FILE_JSON = "/payloadValidation/auditPayloadValidation.json";
     public static final String AUDIT_ID_RQST = "auditId";
     public static final String AUDIT_INDEX_NAME = "audit_index";
 

@@ -19,4 +19,7 @@ public interface AuditService {
     CustomResponse delete(String id);
 
     CustomResponse importData(MultipartFile file);
+
+    // Drops the ES index and rebuilds it from the primary store (Postgres); skips DELETED records
+    CustomResponse loadFromPrimaryAudit();
 }

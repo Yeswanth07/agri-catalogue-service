@@ -2,7 +2,7 @@ package com.catalogue.verg.audit.service.impl;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.catalogue.verg.core.service.LoadFromPrimaryService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -72,6 +72,9 @@ public class AuditServiceImpl implements AuditService {
     @Autowired
     private ImportService importService;
 
+    @Autowired
+    private LoadFromPrimaryService loadFromPrimaryService;
+
     private Logger logger = LoggerFactory.getLogger(AuditServiceImpl.class);
 
     @Value("${spring.redis.cacheTtl}")
@@ -100,9 +103,7 @@ public class AuditServiceImpl implements AuditService {
             auditRepository.save(auditEntity1);
 
             log.info("AuditServiceImpl::createAudit::persisted audit in postgres");
-            ObjectNode jsonNode = objectMapper.createObjectNode();
-//            jsonNode.put("status", Constants.ACTIVE);
-            jsonNode.setAll((ObjectNode) auditEntity);
+            ObjectNode jsonNode = buildDocument(auditEntity, currentTime, currentTime);
             Map<String, Object> map = objectMapper.convertValue(jsonNode, Map.class);
             esUtilService.addDocument(Constants.AUDIT_INDEX_NAME, Constants.INDEX_TYPE,
                     String.valueOf(primaryID), map, vergProperties.getElasticAuditJsonPath());
@@ -271,6 +272,20 @@ public class AuditServiceImpl implements AuditService {
         );
     }
 
+    @Override
+    public CustomResponse loadFromPrimaryAudit() {
+        log.info("AuditServiceImpl :: loadFromPrimaryAudit::started");
+        return loadFromPrimaryService.loadFromPrimary(
+                Constants.AUDIT_INDEX_NAME,
+                vergProperties.getElasticAuditJsonPath(),
+                auditRepository.findAll(),
+                AuditEntity::getAuditId,
+                e -> objectMapper.convertValue(
+                        buildDocument(e.getData(), e.getCreatedOn(), e.getUpdatedOn()),
+                        Map.class),
+                e -> !Constants.DELETED.equals(e.getStatus()));   // skip DELETED; INACTIVE is indexed
+    }
+
     public void createSuccessResponse(CustomResponse response) {
         response.setParams(new RespParam());
         response.getParams().setStatus(Constants.SUCCESS);
@@ -289,6 +304,20 @@ public class AuditServiceImpl implements AuditService {
             }
         }
         return "";
+    }
+
+    private ObjectNode buildDocument(JsonNode data, Timestamp createdOn, Timestamp updatedOn) {
+        ObjectNode node = objectMapper.createObjectNode();
+        if (data != null && data.isObject()) {
+            node.setAll((ObjectNode) data);
+        }
+        if (createdOn != null) {
+            node.put(Constants.CREATED_ON, createdOn.toInstant().toString());
+        }
+        if (updatedOn != null) {
+            node.put(Constants.UPDATED_ON, updatedOn.toInstant().toString());
+        }
+        return node;
     }
 
     public void createErrorResponse(
