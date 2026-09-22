@@ -130,6 +130,12 @@ public class LocationmapperServiceImpl implements LocationmapperService {
             // Generate Primary Key
             String primaryID = primaryKeyUtil.generateKey(Constants.LOCATIONMAPPER_VALIDATION_FILE_JSON);
             locationmapperEntity1.setLocationmapperId(primaryID);
+            // Stamp createdBy/updatedBy into the payload itself, before it's persisted as `data`
+            if (locationmapperEntity instanceof ObjectNode) {
+                String makerId = userContext.path("userId").asText(null);
+                ((ObjectNode) locationmapperEntity).put("createdBy", makerId);
+                ((ObjectNode) locationmapperEntity).put("updatedBy", makerId);
+            }
             // Create Parameters like createdDate / updateDate / Data and Status
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             
@@ -194,7 +200,7 @@ public class LocationmapperServiceImpl implements LocationmapperService {
         CustomResponse response = new CustomResponse();
         SearchResult searchResult = redisTemplate.opsForValue()
                 .get(generateRedisJwtTokenKey(searchCriteria));
-        if (searchResult != null) {
+        if (searchResult != null && !Boolean.TRUE.equals(searchCriteria.getOverrideCache())) {
             log.info("LocationmapperServiceImpl::searchLocationmapper: locationmapper search result fetched from redis");
             response.getResult().put(Constants.RESULT, searchResult);
             createSuccessResponse(response);
@@ -214,10 +220,15 @@ public class LocationmapperServiceImpl implements LocationmapperService {
             return response;
         }
         try {
+            log.info("LocationmapperServiceImpl::searchLocationmapper: locationmapper search result fetched from ES");
             searchResult =
                     esUtilService.searchDocuments(Constants.LOCATIONMAPPER_INDEX_NAME, searchCriteria);
             response.getResult().put(Constants.RESULT, searchResult);
             createSuccessResponse(response);
+            redisTemplate.opsForValue()
+                                .set(generateRedisJwtTokenKey(searchCriteria), searchResult, searchResultRedisTtl,
+                                        TimeUnit.SECONDS);
+
             auditLogService.logAudit(null, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -228,9 +239,9 @@ public class LocationmapperServiceImpl implements LocationmapperService {
         } catch (Exception e) {
             createErrorResponse(response, e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR,
                     Constants.FAILED_CONST);
-            redisTemplate.opsForValue()
-                    .set(generateRedisJwtTokenKey(searchCriteria), searchResult, searchResultRedisTtl,
-                            TimeUnit.SECONDS);
+            //redisTemplate.opsForValue()
+            //        .set(generateRedisJwtTokenKey(searchCriteria), searchResult, searchResultRedisTtl,
+            //                TimeUnit.SECONDS);
             return response;
         }
     }
@@ -501,6 +512,11 @@ public class LocationmapperServiceImpl implements LocationmapperService {
             LocationmapperEntity locationmapperEntity1 = new LocationmapperEntity();
             String primaryID = primaryKeyUtil.generateKey(Constants.LOCATIONMAPPER_VALIDATION_FILE_JSON);
             locationmapperEntity1.setLocationmapperId(primaryID);
+            if (locationmapperEntity instanceof ObjectNode) {
+                String makerId = userContext.path("userId").asText(null);
+                ((ObjectNode) locationmapperEntity).put("createdBy", makerId);
+                ((ObjectNode) locationmapperEntity).put("updatedBy", makerId);
+            }
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             locationmapperEntity1.setCreatedOn(currentTime);
             locationmapperEntity1.setUpdatedOn(currentTime);
@@ -570,6 +586,14 @@ public class LocationmapperServiceImpl implements LocationmapperService {
             }
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             JsonNode auditBefore = locationmapperEntity1.getData();
+            // Preserve the original creator; only updatedBy changes to whoever is submitting
+            if (locationmapperEntity instanceof ObjectNode) {
+                String existingCreatedBy = (auditBefore != null) ? auditBefore.path("createdBy").asText(null) : null;
+                if (existingCreatedBy != null) {
+                    ((ObjectNode) locationmapperEntity).put("createdBy", existingCreatedBy);
+                }
+                ((ObjectNode) locationmapperEntity).put("updatedBy", userContext.path("userId").asText(null));
+            }
             locationmapperEntity1.setData(locationmapperEntity);
             locationmapperEntity1.setStatus(Constants.PENDING);
             locationmapperEntity1.setUpdatedOn(currentTime);

@@ -45,12 +45,12 @@
             "type": "string",
             "description": "Stringified JSON of the record AFTER this action. Indexed in Elasticsearch; the client parses it."
         },
-        "createdOn": {
+        "entityCreatedOn": {
             "type": "string",
             "format": "date-time",
             "description": "ISO-8601 createdOn of the SOURCE entity record (supplied by the caller), not the audit row's own time. Indexed for time filters."
         },
-        "updatedOn": {
+        "entityUpdatedOn": {
             "type": "string",
             "format": "date-time",
             "description": "ISO-8601 updatedOn of the SOURCE entity record (supplied by the caller), not the audit row's own time."

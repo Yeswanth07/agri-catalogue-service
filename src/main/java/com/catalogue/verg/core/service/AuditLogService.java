@@ -42,8 +42,8 @@ public class AuditLogService {
     private static final String FIELD_AUDIT_STATUS = "auditStatus";
     private static final String FIELD_ENTITY_BEFORE = "entityBeforeChanges";
     private static final String FIELD_ENTITY_AFTER = "entityAfterChanges";
-    private static final String FIELD_CREATED_ON = "createdOn";
-    private static final String FIELD_UPDATED_ON = "updatedOn";
+    private static final String FIELD_CREATED_ON = "entityCreatedOn";
+    private static final String FIELD_UPDATED_ON = "entityUpdatedOn";
 
     private static final String EMPTY_JSON = "{}";
 
@@ -62,12 +62,12 @@ public class AuditLogService {
      * @param auditStatus         resulting lifecycle state (optional; omitted when blank, e.g. read/search)
      * @param entityBeforeChanges record before the action (optional; omitted when null)
      * @param entityAfterChanges  record (or endpoint response) after the action
-     * @param createdOn           SOURCE entity record's createdOn (optional; omitted when null)
-     * @param updatedOn           SOURCE entity record's updatedOn (optional; omitted when null)
+     * @param entityCreatedOn         SOURCE entity record's createdOn (optional; omitted when null)
+     * @param entityUpdatedOn           SOURCE entity record's updatedOn (optional; omitted when null)
      */
     public void logAudit(String entityId, String entityName, String userId, String userRole, String functionRole, String operation, String auditStatus,
                          JsonNode entityBeforeChanges, JsonNode entityAfterChanges,
-                         Timestamp createdOn, Timestamp updatedOn) {
+                         Timestamp entityCreatedOn, Timestamp entityUpdatedOn) {
         try {
             ObjectNode node = objectMapper.createObjectNode();
 
@@ -91,11 +91,11 @@ public class AuditLogService {
                 node.put(FIELD_ENTITY_BEFORE, stringify(entityBeforeChanges));
             }
             // Source entity record's timestamps (not the audit row's own time).
-            if (createdOn != null) {
-                node.put(FIELD_CREATED_ON, createdOn.toInstant().toString());
+            if (entityCreatedOn != null) {
+                node.put(FIELD_CREATED_ON, entityCreatedOn.toInstant().toString());
             }
-            if (updatedOn != null) {
-                node.put(FIELD_UPDATED_ON, updatedOn.toInstant().toString());
+            if (entityUpdatedOn != null) {
+                node.put(FIELD_UPDATED_ON, entityUpdatedOn.toInstant().toString());
             }
 
             auditService.createAudit(node);
