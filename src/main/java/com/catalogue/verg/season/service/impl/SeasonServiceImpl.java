@@ -158,7 +158,6 @@ public class SeasonServiceImpl implements SeasonService {
             response.setResult(map);
             response.setResponseCode(HttpStatus.OK);
             log.info("SeasonServiceImpl::createSeason::persisted season in OAS");
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(primaryID, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -166,10 +165,9 @@ public class SeasonServiceImpl implements SeasonService {
                     "create", initialStatus,
                     objectMapper.createObjectNode(), seasonEntity,
                     seasonEntity1.getCreatedOn(), seasonEntity1.getUpdatedOn());
-            }
 
             // Lifecycle-disabled catalogues create ACTIVE records that are never reviewed
-            if (lifecyclePolicy.isEnabledFor(CATALOGUE_NAME) && vergProperties.isNotificationEnabled()) {
+            if (lifecyclePolicy.isEnabledFor(CATALOGUE_NAME)) {
             notificationUtil.sendNotification(
                      TEMPLATE_NAME,
                      TEMPLATE_CONSTANT,
@@ -206,14 +204,12 @@ public class SeasonServiceImpl implements SeasonService {
             log.info("SeasonServiceImpl::searchSeason: season search result fetched from redis");
             response.getResult().put(Constants.RESULT, searchResult);
             createSuccessResponse(response);
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(null, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
                     userContext.path("functionalRole").asText(null),
                     "search", null, null,
                     objectMapper.valueToTree(searchResult), null, null);
-            }
             return response;
         }
         String searchString = searchCriteria.getSearchString();
@@ -233,14 +229,12 @@ public class SeasonServiceImpl implements SeasonService {
                                 .set(generateRedisJwtTokenKey(searchCriteria), searchResult, searchResultRedisTtl,
                                         TimeUnit.SECONDS);
 
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(null, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
                     userContext.path("functionalRole").asText(null),
                     "search", null, null,
                     objectMapper.valueToTree(searchResult), null, null);
-            }
             return response;
         } catch (Exception e) {
             createErrorResponse(response, e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR,
@@ -312,7 +306,7 @@ public class SeasonServiceImpl implements SeasonService {
             throw new CustomException(Constants.ERROR, "error while processing",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        if (auditAfter != null && vergProperties.isAuditEnabled()) {
+        if (auditAfter != null) {
             auditLogService.logAudit(id, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -446,7 +440,6 @@ public class SeasonServiceImpl implements SeasonService {
 
             response.setMessage(Constants.SUCCESSFULLY_DELETED);
             response.setResponseCode(HttpStatus.OK);
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(id, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -454,7 +447,6 @@ public class SeasonServiceImpl implements SeasonService {
                     "delete", Constants.DELETED,
                     seasonEntity.getData(), seasonEntity.getData(),
                     seasonEntity.getCreatedOn(), seasonEntity.getUpdatedOn());
-            }
             return response;
 
         } catch (Exception e) {
@@ -479,13 +471,11 @@ public class SeasonServiceImpl implements SeasonService {
         );
 
         JsonNode importStats = objectMapper.valueToTree(response.getResult());
-        if (vergProperties.isAuditEnabled()) {
         auditLogService.logAudit(null, CATALOGUE_NAME,
                 userContext.path("userId").asText(null),
                 userContext.path("userName").asText(null),
                 userContext.path("functionalRole").asText(null),
                 "import", null, null, importStats, null, null);
-        }
 
         return response;
     }
@@ -545,7 +535,6 @@ public class SeasonServiceImpl implements SeasonService {
             response.setResult(map);
             response.setMessage(Constants.SUCCESSFULLY_CREATED);
             response.setResponseCode(HttpStatus.OK);
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(primaryID, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -553,7 +542,6 @@ public class SeasonServiceImpl implements SeasonService {
                     "draft", Constants.DRAFT,
                     objectMapper.createObjectNode(), seasonEntity,
                     seasonEntity1.getCreatedOn(), seasonEntity1.getUpdatedOn());
-            }
             return response;
         } catch (Exception e) {
             throw new CustomException("error while processing", e.getMessage(),
@@ -622,7 +610,6 @@ public class SeasonServiceImpl implements SeasonService {
             response.setResult(map);
             response.setMessage(Constants.SUCCESSFULLY_UPDATED);
             response.setResponseCode(HttpStatus.OK);
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(id, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -630,9 +617,7 @@ public class SeasonServiceImpl implements SeasonService {
                     "add-promote", Constants.PENDING,
                     auditBefore, seasonEntity,
                     seasonEntity1.getCreatedOn(), seasonEntity1.getUpdatedOn());
-            }
 
-            if (vergProperties.isNotificationEnabled()) {
             notificationUtil.sendNotification(
                  TEMPLATE_NAME,
                  TEMPLATE_CONSTANT,
@@ -644,7 +629,6 @@ public class SeasonServiceImpl implements SeasonService {
                  ),
                  userContext.path("orgId").asText(null)
             );
-            }
             return response;
         } catch (Exception e) {
             throw new CustomException("error while processing", e.getMessage(),
@@ -730,7 +714,6 @@ public class SeasonServiceImpl implements SeasonService {
             response.setResult(map);
             response.setMessage(Constants.SUCCESSFULLY_UPDATED);
             response.setResponseCode(HttpStatus.OK);
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(id, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -738,7 +721,6 @@ public class SeasonServiceImpl implements SeasonService {
                     "toggle", newStatus,
                     seasonEntity1.getData(), seasonEntity1.getData(),
                     seasonEntity1.getCreatedOn(), seasonEntity1.getUpdatedOn());
-            }
             return response;
         } catch (Exception e) {
             throw new CustomException("error while processing", e.getMessage(),
@@ -799,7 +781,6 @@ public class SeasonServiceImpl implements SeasonService {
             response.setResult(map);
             response.setMessage(Constants.SUCCESSFULLY_UPDATED);
             response.setResponseCode(HttpStatus.OK);
-            if (vergProperties.isAuditEnabled()) {
             auditLogService.logAudit(id, CATALOGUE_NAME,
                     userContext.path("userId").asText(null),
                     userContext.path("userName").asText(null),
@@ -807,9 +788,7 @@ public class SeasonServiceImpl implements SeasonService {
                     operation, targetStatus,
                     seasonEntity1.getData(), seasonEntity1.getData(),
                     seasonEntity1.getCreatedOn(), seasonEntity1.getUpdatedOn());
-            }
 
-            if (vergProperties.isNotificationEnabled()) {
              List<NotificationTemplate> templates = NotificationTemplateResolver.resolveDecisionTemplates(
                       operation,
                       targetStatus
@@ -827,7 +806,6 @@ public class SeasonServiceImpl implements SeasonService {
                 userContext.path("orgId").asText(null)
              );
              }
-            }
             return response;
         } catch (Exception e) {
             throw new CustomException("error while processing", e.getMessage(),
@@ -864,7 +842,7 @@ public class SeasonServiceImpl implements SeasonService {
     public String generateRedisJwtTokenKey(Object requestPayload) {
         if (requestPayload != null) {
             try {
-                String reqJsonString = objectMapper.writeValueAsString(requestPayload);
+                String reqJsonString = objectMapper.writeValueAsString(requestPayload)+CATALOGUE_NAME;
                 return JWT.create()
                         .withClaim(Constants.REQUEST_PAYLOAD, reqJsonString)
                         .sign(Algorithm.HMAC256(Constants.JWT_SECRET_KEY));
